@@ -1,8 +1,2 @@
-# Routes
-# This file defines all application routes (Higher priority routes first)
-# https://www.playframework.com/documentation/latest/ScalaRouting
-# ~~~~
-
-# An example controller showing a sample home page
-GET     /person/:id                 controllers.PersonController.index(id: Long)
-GET     /person                     controllers.PersonController.list(offset: Int ?= 0, limit: Int ?= 10)
+GET  /person/:id   controllers.PersonController.index(id: Long)
+GET  /person       controllers.PersonController.list(offset: Int ?= 0, limit: Int ?= 10)

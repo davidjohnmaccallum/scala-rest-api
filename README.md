@@ -85,7 +85,7 @@ object Person {
 }
 ```
 
-Then create a controller action to read the data from the database and return as JSON.
+Then create controller actions to read the data from the database and return as JSON.
 
 ```scala
 package controllers
@@ -118,4 +118,11 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
 }
+```
+
+And map the controller actions to routes. Note the parameter defaults. 
+
+```routes
+GET  /person/:id   controllers.PersonController.index(id: Long)
+GET  /person       controllers.PersonController.list(offset: Int ?= 0, limit: Int ?= 10)
 ```
