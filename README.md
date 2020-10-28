@@ -1,15 +1,15 @@
 # Scala Rest API
 
-###Prerequisites:
+### Prerequisites:
 * Install Docker
 * Install Scala
 * Install SBT
 
-###Create a new play application 
+### Create a new play application 
 
 `sbt new playframework/play-scala-seed.g8`
 
-###Running and debugging your program
+### Running and debugging your program
 
 To run your program type `~run [port]`. Default port is 9000.
 
@@ -27,7 +27,7 @@ To enable breakpoints make sure the little debug icon above is selected.
 
 ![Debug step 2](./readme_images/debug_2.png)
 
-###Setup a database 
+### Setup a database 
 
 Here is the Docker Compose file:
 
@@ -57,7 +57,7 @@ libraryDependencies += "org.playframework.anorm" %% "anorm" % "2.6.4"
 
 **Note, whenever you change your build.sbt file you must run reload in sbt.**
 
-###Reading from the database
+### Reading from the database
 
 First create a model class.
 
