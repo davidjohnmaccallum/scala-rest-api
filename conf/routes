@@ -1,2 +1,9 @@
-GET  /person/:id   controllers.PersonController.index(id: Long)
-GET  /person       controllers.PersonController.list(offset: Int ?= 0, limit: Int ?= 10)
+GET /echo controllers.SimpleController.echo
+GET /greet controllers.SimpleController.greet(name: String ?= "World")
+GET /todo controllers.SimpleController.todo
+GET /someHtml controllers.SimpleController.someHtml
+
+GET /person/:id controllers.PersonController.index(id: Long)
+GET /person controllers.PersonController.list(offset: Int ?= 0, limit: Int ?= 10)
+PUT /person controllers.PersonController.insert
+POST /person/:id controllers.PersonController.update(id: Long)
