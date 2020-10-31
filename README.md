@@ -1,22 +1,22 @@
 # Scala Rest API
 
-### Prerequisites:
+## Prerequisites:
 * Install Docker
 * Install Java JDK
 * Install Scala
 * Install SBT
 
-### IDE Setup
+## IDE Setup
 
 Install IntelliJ Community Edition and add the following plugins:
 - [Scala](https://plugins.jetbrains.com/plugin/1347-scala)
 - [Play 2 Routes](https://plugins.jetbrains.com/plugin/10053-play-2-routes)
 
-### Create a new play application 
+## Create a new play application 
 
 `sbt new playframework/play-scala-seed.g8`
 
-### Running and debugging your program
+## Running and debugging your program
 
 To run your program type `~run [port]`. Default port is 9000.
 
@@ -34,7 +34,7 @@ To enable breakpoints make sure the little debug icon above is selected.
 
 ![Debug step 2](./readme_images/debug_2.png)
 
-### Setup a database 
+## Setup a database 
 
 Here is the Docker Compose file:
 
@@ -64,7 +64,7 @@ libraryDependencies += "org.playframework.anorm" %% "anorm" % "2.6.4"
 
 **Note, whenever you change your build.sbt file you must run reload in sbt.**
 
-### Working with JSON and the database
+## Working with JSON and the database
 
 First create a model class.
 
@@ -245,5 +245,114 @@ class ErrorHandler extends HttpErrorHandler {
 }
 ```
 
-// TODO: Logging
-// TODO: Error handling
+## Logging to a central log server
+
+I will be logging to Graylog. I used the Docker Compose file from the [Graylog docs](https://docs.graylog.org/en/3.2/pages/installation/docker.html).
+
+```yaml
+version: '3'
+services:
+  # MongoDB: https://hub.docker.com/_/mongo/
+  mongo:
+    image: mongo:3
+    container_name: graylog_mongo
+    networks:
+      - graylog
+  # Elasticsearch: https://www.elastic.co/guide/en/elasticsearch/reference/6.x/docker.html
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.10
+    container_name: graylog_elasticsearch
+    environment:
+      - http.host=0.0.0.0
+      - transport.host=localhost
+      - network.host=0.0.0.0
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+    networks:
+      - graylog
+  # Graylog: https://hub.docker.com/r/graylog/graylog/
+  graylog:
+    image: graylog/graylog:3.3
+    container_name: graylog
+    environment:
+      # CHANGE ME (must be at least 16 characters)!
+      - GRAYLOG_PASSWORD_SECRET=somepasswordpepper
+      # Password: admin
+      - GRAYLOG_ROOT_PASSWORD_SHA2=8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
+      - GRAYLOG_HTTP_EXTERNAL_URI=http://127.0.0.1:9000/
+    networks:
+      - graylog
+    depends_on:
+      - mongo
+      - elasticsearch
+    ports:
+      # Graylog web interface and REST API
+      - 9000:9000
+      # Syslog TCP
+      - 1514:1514
+      # Syslog UDP
+      - 1514:1514/udp
+      # GELF TCP
+      - 12201:12201
+      # GELF UDP
+      - 12201:12201/udp
+      # Plaintext
+      - 5555:5555
+networks:
+  graylog:
+    driver: bridge
+```
+
+Start Graylog.
+
+```
+docker-compose -f graylog-docker-compose.yaml up -d
+```
+
+
+I used the [GELF Logback Appender from paluch.biz](https://logging.paluch.biz/examples/logback.html).
+
+```xml
+  <appender name="GELF" class="biz.paluch.logging.gelf.logback.GelfLogbackAppender">
+    <host>udp:localhost</host>
+    <port>12201</port>
+    <version>1.1</version>
+    <facility>logstash-gelf</facility>
+    <extractStackTrace>true</extractStackTrace>
+    <filterStackTrace>true</filterStackTrace>
+    <includeLocation>true</includeLocation>
+    <mdcProfiling>true</mdcProfiling>
+    <timestampPattern>yyyy-MM-dd HH:mm:ss,SSS</timestampPattern>
+    <maximumMessageSize>8192</maximumMessageSize>
+    <additionalFields>serviceName=scala-rest-api</additionalFields>
+    <additionalFieldTypes>serviceName=String</additionalFieldTypes>
+    <mdcFields>mdcField1,mdcField2</mdcFields>
+    <dynamicMdcFields>myMdc.*,[a-z]+Field</dynamicMdcFields>
+    <dynamicMdcFieldTypes>my_field.*=String,business\..*\.field=double</dynamicMdcFieldTypes>
+    <includeFullMdc>true</includeFullMdc>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
+      <level>WARN</level>
+    </filter>
+  </appender>
+```
+
+I added logging statements to my code.
+
+```scala
+  val logger = Logger("application")
+  logger.info(s"Updated person $id")
+```
+
+![Graylog UI](./readme_images/logging.png)
+
+## TODO
+
+- Add Correlation ID to logs
+- Error handling

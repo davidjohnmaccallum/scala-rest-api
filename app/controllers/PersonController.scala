@@ -7,14 +7,17 @@ import play.api.db.Database
 import play.api.libs.json._
 import anorm.SqlParser._
 import models.Person
+import play.api.Logger
 
 @Singleton
 class PersonController @Inject()(val controllerComponents: ControllerComponents, db: Database) extends BaseController {
 
   private implicit val personWrites: OWrites[Person] = Json.writes[Person]
   private implicit val personReads: Reads[Person] = Json.reads[Person]
+  val logger = Logger("application")
 
   def index(id: Long): Action[AnyContent] = Action {
+    logger.debug(s"Reading person $id")
     db.withConnection { implicit c =>
       val person =
         SQL"""
@@ -27,6 +30,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def list(offset: Int, limit: Int): Action[AnyContent] = Action {
+    logger.debug(s"Reading people")
     db.withConnection { implicit c =>
       val people =
         SQL"""
@@ -48,6 +52,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
                  values (${person.firstName}, ${person.lastName}, ${person.email}, ${person.gender}, ${person.ipAddress})
                  returning id
                  """.as(int("id").single)
+          logger.info(s"Inserted person $id")
           Ok(Json.obj("id" -> id))
         }
       case _ => BadRequest(Json.obj("err" -> "Invalid Person"))
@@ -67,6 +72,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
                    ipaddress = ${person.ipAddress}
                  where id = $id
                  """.executeUpdate()
+          logger.info(s"Updated person $id")
           Ok(Json.obj("updated" -> updateRes))
         }
       case _ => BadRequest(Json.obj("err" -> "Invalid Person"))
