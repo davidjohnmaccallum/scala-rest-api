@@ -1,5 +1,27 @@
 version: '3'
 services:
+
+  # Database
+  # ########
+  
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: example
+
+  # Observability Stuff
+  # ###################
+
+  # Grafana for metrics and alerts
+  grafana:
+    image: grafana/grafana:7.3.4
+    ports: 
+      - "3000:3000"
+
+  # Graylog a central log server
   # MongoDB: https://hub.docker.com/_/mongo/
   mongo:
     image: mongo:3
