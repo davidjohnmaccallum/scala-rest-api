@@ -4,6 +4,7 @@ import play.api.mvc._
 import play.api.libs.json._
 
 import scala.concurrent.Future
+import play.Logger
 
 /**
  * Return JSON format errors by default.
@@ -17,7 +18,7 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     Future.successful {
-      println(exception.getMessage)
+      println(exception)
       InternalServerError(Json.obj("err" -> "Internal server error"))
     }
   }
