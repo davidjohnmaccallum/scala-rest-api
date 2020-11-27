@@ -10,8 +10,9 @@ import scala.concurrent.Future
  */
 class ErrorHandler extends HttpErrorHandler {
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = {
+    val defaultedMessage = if (!message.isEmpty) message else "Invalid request"
     Future.successful(
-      Status(statusCode)(Json.obj("err" -> message))
+      Status(statusCode)(Json.obj("err" -> defaultedMessage))
     )
   }
 
