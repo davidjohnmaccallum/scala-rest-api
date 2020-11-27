@@ -1,5 +1,39 @@
 version: '3'
 services:
+
+  # Database
+  # ########
+  
+  db:
+    image: postgres
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: example
+
+  # Observability Stuff
+  # ###################
+  # Grafana for metrics and alerts
+  grafana:
+    image: grafana/grafana:7.3.4
+    ports:
+      - 3000:3000
+    networks:
+      - grafana
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports:
+      - 8080:80
+      # - 2003-2004:2003-2004
+      # - 2023-2024:2023-2024
+      - 8125:8125/udp
+      # - 8126:8126
+    networks:
+      - grafana
+
+
+  # Graylog a central log server
   # MongoDB: https://hub.docker.com/_/mongo/
   mongo:
     image: mongo:3
@@ -44,15 +78,17 @@ services:
       # Graylog web interface and REST API
       - 9000:9000
       # Syslog TCP
-      - 1514:1514
+      # - 1514:1514
       # Syslog UDP
-      - 1514:1514/udp
+      # - 1514:1514/udp
       # GELF TCP
       - 12201:12201
       # GELF UDP
       - 12201:12201/udp
       # Plaintext
-      - 5555:5555
+      # - 5555:5555
 networks:
   graylog:
+    driver: bridge
+  grafana:
     driver: bridge

@@ -18,13 +18,14 @@ Install IntelliJ Community Edition and add the following plugins:
 
 ## Running and debugging your program
 
-To run your program type `~run [port]`. Default port is 9000.
+To run your program type `~run [port]`. Default port is 9000. I will be running the app on 9001 to avoid a conflict with Graylog.
 
 ![Run](./readme_images/run.png)
 
-Open [http://localhost:9000](http://localhost:9000) to view your program.
+Open [http://localhost:9001](http://localhost:9001 to view your program.
 
-Stop the program by pressing the red stop button. Pressing enter to stop the program causes the process to carry on running in the background.
+Stop the program by pressing the red stop button. You may find the app keeps on running. You can kill it using 
+`kill -9 $(lsof -t -i:9001)`.
 
 To enable debugging in IntelliJ you must set Enable debugging to true.
 
@@ -50,7 +51,9 @@ services:
       POSTGRES_PASSWORD: example
 ```
 
-Start the database: `docker-compose -f docker-compose.yaml up -d`
+Start the database: `docker-compose up -d`
+
+Populate the database with mock data using MOCK_DATA.sql
 
 Add database dependencies to your build.sbt file:
 
@@ -245,7 +248,7 @@ class ErrorHandler extends HttpErrorHandler {
 }
 ```
 
-## Logging to a central log server
+## Observability: Logging to a central log server
 
 I will be logging to Graylog. I used the Docker Compose file from the [Graylog docs](https://docs.graylog.org/en/3.2/pages/installation/docker.html).
 
@@ -313,7 +316,7 @@ networks:
 Start Graylog.
 
 ```
-docker-compose -f graylog-docker-compose.yaml up -d
+docker-compose up -d
 ```
 
 
@@ -350,7 +353,87 @@ I added logging statements to my code.
   logger.info(s"Updated person $id")
 ```
 
-![Graylog UI](./readme_images/logging.png)
+### Configuring Graylog
+
+Open the Graylog UI at http://localhost:9000
+
+Create a GELF UDP input by going to System / Inputs.
+
+![Graylog add input](./readme_images/graylog_1.png)
+
+![Graylog add input](./readme_images/graylog_2.png)
+
+Create some log messages by calling the actions on PersonController. You should see these appear in the log.
+
+![Graylog logs](./readme_images/graylog_3.png)
+
+## Observability: Tracking metrics using Grafana, Graphite and statsd
+
+Here is the docker compose file to get Grafana and Graphite up and running:
+
+```yaml
+version: '3'
+services:
+  # Grafana for metrics and alerts
+  grafana:
+    image: grafana/grafana:7.3.4
+    ports:
+      - 3000:3000
+    networks:
+      - grafana
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports:
+      - 80:8080
+      # - 2003-2004:2003-2004
+      # - 2023-2024:2023-2024
+      - 8125:8125/udp
+      # - 8126:8126
+    networks:
+      - grafana
+networks:
+  grafana:
+    driver: bridge
+```
+
+Once this is up and running you can access Grafana at http://localhost:3000 with username and password of admin/admin.
+
+I am using the statsd client from timgroup.com.
+
+```scala
+libraryDependencies += "com.timgroup" % "java-statsd-client" % "3.1.0"
+```
+
+You use it like this:
+
+```scala
+  val statsd = new NonBlockingStatsDClient("scala-rest-client", "localhost", 8125)
+  statsd.incrementCounter("person.index")
+```
+
+### Configuring Grafana
+
+[Open Grafana](http://localhost:3000) and log in using admin/admin.
+
+![Grafana Home](./readme_images/grafana_1.png)
+
+Add Graphite as a data source.
+
+![Grafana add data source](./readme_images/grafana_2.png)
+
+![Grafana add data source](./readme_images/grafana_3.png)
+
+![Grafana add data source](./readme_images/grafana_4.png)
+
+Create some stats. You can do this by calling the PersonController actios. 
+
+Dispaly your stats on a dashboard.
+
+![Grafana create dashboard](./readme_images/grafana_5.png)
+
+![Grafana create dashboard](./readme_images/grafana_6.png)
+
+![Grafana create dashboard](./readme_images/grafana_7.png)
 
 ## TODO
 
