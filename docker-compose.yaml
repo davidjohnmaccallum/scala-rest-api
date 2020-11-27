@@ -16,10 +16,18 @@ services:
   # ###################
 
   # Grafana for metrics and alerts
-  grafana:
+  grafana: 
     image: grafana/grafana:7.3.4
     ports: 
       - "3000:3000"
+  graphite:
+    image: graphiteapp/graphite-statsd
+    ports: 
+      - "80:80"
+      - "2003-2004:2003-2004"
+      - "2023-2024:2023-2024"
+      - "8125:8125/udp"
+      - "8126:8126"
 
   # Graylog a central log server
   # MongoDB: https://hub.docker.com/_/mongo/

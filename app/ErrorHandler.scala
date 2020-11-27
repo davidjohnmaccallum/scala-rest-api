@@ -17,7 +17,7 @@ class ErrorHandler extends HttpErrorHandler {
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
     Future.successful {
-      println(exception.getMessage)
+      exception.printStackTrace()
       InternalServerError(Json.obj("err" -> "Internal server error"))
     }
   }

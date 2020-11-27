@@ -13,6 +13,7 @@ libraryDependencies += "org.postgresql" % "postgresql" % "42.2.1"
 libraryDependencies += jdbc
 libraryDependencies += "org.playframework.anorm" %% "anorm" % "2.6.4"
 libraryDependencies += "biz.paluch.logging" % "logstash-gelf" % "1.14.0"
+libraryDependencies += "com.timgroup" % "java-statsd-client" % "3.1.0"
 
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "com.example.controllers._"
