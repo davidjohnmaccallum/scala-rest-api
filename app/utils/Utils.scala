@@ -5,5 +5,5 @@ import play.api.Logger
 
 object Utils {
   val logger: Logger = Logger("application")
-  val statsd = new NonBlockingStatsDClient("scala-rest-client", "localhost", 8125)
+  val statsd = new NonBlockingStatsDClient("scala-rest-client", "graphite", 8125)
 }
