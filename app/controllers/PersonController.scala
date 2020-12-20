@@ -1,6 +1,6 @@
 package controllers
 
-import utils.Utils._
+import utils.Utils
 import javax.inject._
 import play.api.mvc._
 import anorm._
@@ -10,14 +10,14 @@ import anorm.SqlParser._
 import models.Person
 
 @Singleton
-class PersonController @Inject()(val controllerComponents: ControllerComponents, db: Database) extends BaseController {
+class PersonController @Inject()(val controllerComponents: ControllerComponents, db: Database, utils: Utils) extends BaseController {
 
   implicit val personWrites: OWrites[Person] = Json.writes[Person]
   implicit val personReads: Reads[Person] = Json.reads[Person]
 
   def read(id: Long): Action[AnyContent] = Action {
-    logger.debug(s"Reading person $id")
-    statsd.incrementCounter("person.index")
+    utils.logger.debug(s"Reading person $id")
+    utils.statsd.incrementCounter("person.index")
     db.withConnection { implicit c =>
       val person =
         SQL"""
@@ -30,8 +30,8 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def list(offset: Int, limit: Int): Action[AnyContent] = Action {
-    logger.debug(s"Reading people")
-    statsd.incrementCounter("person.list")
+    utils.logger.debug(s"Reading people")
+    utils.statsd.incrementCounter("person.list")
     db.withConnection { implicit c =>
       val people =
         SQL"""
@@ -45,7 +45,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def insert(): Action[JsValue] = Action(parse.json) { req =>
-    statsd.incrementCounter("person.insert")
+    utils.statsd.incrementCounter("person.insert")
     Json.fromJson[Person](req.body) match {
       case JsSuccess(person, _) =>
         db.withConnection { implicit c =>
@@ -55,7 +55,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
                  values (${person.firstName}, ${person.lastName}, ${person.email}, ${person.gender}, ${person.ipAddress})
                  returning id
                  """.as(int("id").single)
-          logger.info(s"Inserted person $id")
+          utils.logger.info(s"Inserted person $id")
           Ok(Json.obj("id" -> id))
         }
       case _ => BadRequest(Json.obj("err" -> "Invalid Person"))
@@ -63,7 +63,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def update(id: Long): Action[JsValue] = Action(parse.json) { req =>
-    statsd.incrementCounter("person.update")
+    utils.statsd.incrementCounter("person.update")
     Json.fromJson[Person](req.body) match {
       case JsSuccess(person, _) =>
         db.withConnection { implicit c =>
@@ -77,7 +77,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
                    ipaddress = ${person.ipAddress}
                  where id = $id
                  """.executeUpdate()
-          logger.info(s"Updated person $id")
+          utils.logger.info(s"Updated person $id")
           Ok(Json.obj("updated" -> updateRes))
         }
       case _ => BadRequest(Json.obj("err" -> "Invalid Person"))
@@ -85,7 +85,7 @@ class PersonController @Inject()(val controllerComponents: ControllerComponents,
   }
 
   def delete(id: Long): Action[AnyContent] = Action {
-    statsd.incrementCounter("person.delete")
+    utils.statsd.incrementCounter("person.delete")
     db.withConnection { implicit c =>
       SQL"delete from people where id = $id".execute()
       Ok(Json.obj("message" -> "done"))

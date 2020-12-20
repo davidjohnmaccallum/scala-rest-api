@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 sbt dist
-docker build -t scala-rest-api:1.0 .
+docker build -t scala-rest-api:1 .
